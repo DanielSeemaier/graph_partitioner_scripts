@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# mtmetis must be run with --times
+# log filename should contain __seed[0-9]+, otherwise the Seed column is set to -1
+
+read -rd '' SCRIPT <<'EOF' 
+BEGIN {
+      print "Graph,N,M,Seed,Threads,K,Cut,Epsilon,Balance,Time,Failed"
+      reset()
+}    
+/NEXT_FILE/ { yield() }
+match($0, /FILE=.*__seed([0-9]+)/, m) {
+      data["Seed"] = m[1]
+}
+match($0, /Read '(.*\/)*(.+)' with ([0-9]+) vertices and ([0-9]+) edges/, m) {
+      data["Graph"] = m[2]
+      data["N"] = m[3]
+      data["M"] = m[4]
+}
+match($0, /- Edgecut: ([0-9]+)/, m) {
+      data["Cut"] = m[1]
+}
+match($0, /constraint #0:\s*([0-9\.]+)/, m) {
+      data["Balance"] = m[1] - 1.0
+}
+match($0, /Balance: ([0-9\.]+)/, m) {
+      data["Epsilon"] = m[1]
+}
+match($0, /Number of Partitions: ([0-9]+)/, m) {
+      data["K"] = m[1]
+}
+match($0, /Number of Threads: ([0-9]+)/, m) {
+      data["Threads"] = m[1]
+}
+match($0, /Total Time: ([0-9\.]+)/, m) {
+      data["Time"] = m[1]
+}
+END {
+      yield()
+}
+
+function yield() {
+      if (length(data) == 0) { return }
+      if (!("Seed" in data)) { data["Seed"] = -1 }
+      failed = length(data) < 10
+      
+      printf "%s,", data["Graph"]
+      printf "%d,", data["N"]
+      printf "%d,", data["M"]
+      printf "%d,", data["Seed"]
+      printf "%d,", data["Threads"]
+      printf "%d,", data["K"]
+      printf "%d,", data["Cut"]
+      printf "%f,", data["Epsilon"] 
+      printf "%f,", data["Balance"]
+      printf "%f,", data["Time"]
+      printf "%d\n", failed
+
+      reset()
+}
+
+function reset() {
+      split("", data)
+}
+EOF
+
+
+DIR=${1:-"."}
+gawk "$SCRIPT" <(for FILE in "$DIR"/*; do echo ""; echo "NEXT_FILE"; echo "FILE=$(basename "$FILE")"; cat "$FILE"; done)

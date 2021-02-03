@@ -1,0 +1,41 @@
+Read '/global_data/seemaier/benchmark_sets/all/arabic-2005.graph' with 22744080 vertices and 553903073 edges.
+% PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Number of Threads: 2 | Verbosity: low
+Number of Runs: 1 | Random Seed: 12958
+Number of Partitions: 2 | Partition Type: kway
+Coarsening Type: shem | Contraction Type: ls
+Refinement Type: greedy | Number of Refinement Passes: 8
+Balance: 1.03 | Distribution: blockcyclic
+Leaf-Matching: Yes | Remove Islands: No
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+********************************************************************************
+ size of vtx_type: 32, adj_type: 32, wgt_type: 32, pid_type: 32, tid_type: 32, real_type: 32
+
+
+- Direct k-way Partitioning ----------------------------------------------------
+ - Edgecut: 1260001, communication volume: 787001.
+
+ - Balance:
+     constraint #0:  1.000 out of 0.000
+
+ - Most overweight partition:
+     pid: 0, actual: 11373895, desired: 11372040, ratio: 1.00
+
+********************************************************************************
+$ MTMETIS TIME $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+Total Time: 44.053s
+	Preprocessing: 2.78229s
+	Partitioning: 37.31445s
+		Coarsening: 23.37370s
+			Matching: 9.05990s
+			Contraction: 14.14275s
+		Initial Partitioning: 11.39847s
+		Uncoarsening: 2.29812s
+			Projection: 2.07422s
+			Refinement: 0.42156s
+	Postprocessing: 0.27152s
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$ AUXILLARY TIME $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+Input: 28.18694s
+Output: 0.00000s
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
