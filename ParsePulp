@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# mtmetis must be run with --times
+# log filename should contain __seed[0-9]+, otherwise the Seed column is set to -1
+
+read -rd '' SCRIPT <<'EOF' 
+BEGIN {
+      print "Graph,N,M,Seed,Threads,K,Cut,Epsilon,Balance,Time,Failed"
+      reset()
+}    
+/NEXT_FILE/ { yield() }
+match($0, /FILE=.*__seed([0-9]+)/, m) {
+      data["Seed"] = m[1]
+}
+match($0, /FILE=.*__eps([0-9\.]+).*\.log/, m) {
+      data["Epsilon"] = m[1]	   
+}
+match($0, /FILE=.*__t([0-9]+)/, m) {
+      data["Threads"] = m[1]
+}
+match($0, /Reading in (.*\/)*(.+) \.\.\.\s* ([0-9]+)\s* ([0-9]+)/, m) {
+      data["Graph"] = m[2]
+      data["N"] = m[3]
+      data["M"] = m[4]
+}
+match($0, /Edge Cut: ([0-9]+)/, m) {
+      data["Cut"] = m[1]
+}
+match($0, /Vert overweight:\s*([0-9\.]+)/, m) {
+      data["Balance"] = m[1] - 1.0
+}
+match($0, /Doing.*with ([0-9]+) parts/, m) {
+      data["K"] = m[1]
+}
+match($0, /Number of Threads: ([0-9]+)/, m) {
+      data["Threads"] = m[1]
+}
+match($0, /Partitioning Time:\s*([0-9\.]+)/, m) {
+      data["Time"] = m[1]
+}
+END {
+      yield()
+}
+
+function yield() {
+      if (length(data) == 0) { return }
+      if (!("Seed" in data)) { data["Seed"] = -1 }
+      if (!("Epsilon" in data)) { data["Epsilon"] = 1.03 }
+      if (!("Threads" in data)) { data["Threads"] = -1 }
+      failed = length(data) < 10
+      
+      printf "%s,", data["Graph"]
+      printf "%d,", data["N"]
+      printf "%d,", data["M"]
+      printf "%d,", data["Seed"]
+      printf "%d,", data["Threads"]
+      printf "%d,", data["K"]
+      printf "%d,", data["Cut"]
+      printf "%f,", data["Epsilon"] 
+      printf "%f,", data["Balance"]
+      printf "%f,", data["Time"]
+      printf "%d\n", failed
+
+      reset()
+}
+
+function reset() {
+      split("", data)
+}
+EOF
+
+
+DIR=${1:-"."}
+gawk "$SCRIPT" <(for FILE in "$DIR"/*; do echo ""; echo "NEXT_FILE"; echo "FILE=$(basename "$FILE")"; cat "$FILE"; done)

@@ -1,0 +1,12 @@
+Reading in /global_data/seemaier/benchmark_sets/all/144.graph ...  144649  1074393 
+... Done:  0.375898
+
+Beginning partitioning ... 	Doing bfs init stage with 2 parts
+done:  0.002538(s)
+	Beginning vertex (and edge) refinement
+		Doing vert balance and refinement stage
+done:  0.013890(s)
+	Finished outer loop iter 1:  0.013907(s)
+Partitioning finished:  0.016470(s)
+Partitioning Time:  0.016475
+
