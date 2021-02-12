@@ -1,0 +1,52 @@
+#!/bin/bash
+DIR=${1:-"."}
+read -rd '' parser << 'EOF'
+BEGIN {
+    print "Graph,N,M,K,Epsilon,Seed,Cut,Balance,Time,Failed"
+    split("", data)
+}
+match($0, /FILE=(.*?)__k([0-9]+)__eps__seed([0-9]+)/, m) {
+    if (length(data) > 0) {
+        yield(data)
+    }
+
+    data["graph"] = m[1] ".graph"
+    data["k"] = m[2]
+    data["seed"] = m[3]
+}
+match($0, /#Nodes:\s*([0-9]+)/, m) {
+    data["n"] = m[1]
+}
+match($0, /#HyperEdges:\s*([0-9]+)/, m) {
+    data["m"] = m[1]
+}
+match($0, /partitioning done in ([0-9]+) milliseconds/, m) {
+    data["time"] = m[1] / 1000
+}
+match($0, /Hyperedges cut: ([0-9]+)/, m) {
+    data["cut"] = m[1]
+}
+match($0, /node balancing: ([0-9\.e\-]+)/, m) {
+    data["balance"] = 1 + m[1]
+}
+END {
+    if (length(data) > 0) { yield(data) }
+}
+
+function yield(data) {
+    failed = length(data) != 8
+    printf "%s,", data["graph"]
+    printf "%d,", data["n"]
+    printf "%d,", data["m"]
+    printf "%d,", data["k"]
+    printf "%f,", 0.03
+    printf "%d,", data["seed"]
+    printf "%d,", data["cut"]
+    printf "%f,", data["balance"]
+    printf "%f,", data["time"]
+    printf "%d\n", failed
+
+    for (e in data) { delete data[e] }
+}
+EOF
+gawk "$parser" <(for FILE in "$DIR"/*; do echo "FILE=$(basename "$FILE")";  cat "$FILE"; done)

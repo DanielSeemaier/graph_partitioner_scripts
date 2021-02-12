@@ -1,0 +1,57 @@
+#!/bin/bash
+DIR=${1:-"."}
+read -rd '' parser << 'EOF'
+BEGIN {
+    print "Graph,N,M,K,Epsilon,Seed,Cut,Balance,Time,Failed"
+    split("", data)
+}
+match($0, /Calling command/) {
+    if (length(data) > 0) {
+        print_and_clear(data)
+    }
+}
+match($0, /Reading from file .*\/(.*\.graph)/, m) {
+    data["graph"] = m[1]    
+}
+match($0, /Expecting ([0-9]+) nodes and ([0-9]+) edges/, m) {
+    data["n"] = m[1]
+    data["m"] = m[2]
+}
+match($0, /--numBlocks ([0-9]+)/, m) {
+    data["k"] = m[1]
+}
+match($0, /finalCut: ([0-9]+)/, m) {
+    data["cut"] = m[1]
+}
+match($0, /finalImbalance: ([0-9\.]+)/, m) {
+    data["balance"] = 1 + m[1]
+}
+match($0, /timeTotal: ([0-9\.]+)/, m) {
+    data["time"] = m[1]
+}
+END {
+    if (length(data) > 0) {
+        print_and_clear(data)
+    }
+}
+
+function print_and_clear(data) {
+    failed = length(data) != 7
+    printf "%s,", data["graph"]
+    printf "%d,", data["n"]
+    printf "%d,", data["m"]
+    printf "%d,", data["k"]
+    printf "0.03,"
+    printf "-1,"
+    printf "%d,", data["cut"]
+    printf "%f,", data["balance"]
+    printf "%f,", data["time"]
+    printf "%d", failed
+    printf "\n"
+
+    for (e in data) {
+        delete data[e]
+    }
+}
+EOF
+gawk "$parser" <(for FILE in "$DIR"/*; do cat "$FILE"; done)

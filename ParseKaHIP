@@ -1,0 +1,59 @@
+#!/bin/bash
+DIR=${1:-"."}
+
+read -d '' parser << 'EOF'
+BEGIN {
+    print "Graph,N,M,K,Seed,Cut,Balance,Time,Failed"
+    split("", data)
+}
+{
+    if (match($0, /FILE=(.*?)__k([0-9]+)__eps[0-9]+__seed([0-9]+)/, m)) {
+        if (length(data) > 0) {
+            print_and_clear(data)
+        }
+
+        data["graph"] = m[1] ".graph"
+        data["k"] = m[2]
+        data["seed"] = m[3]
+    }
+    if (match($0, /graph has ([0-9]+) nodes and ([0-9]+) edges/, m)) {
+        data["m"] = m[2] / 2
+        data["n"] = m[1]
+    }
+    if (match($0, /^time spent for partitioning ([0-9\.]+)$/, m)) {
+        data["time"] = m[1]
+    }
+    if (match($0, /^finalobjective\\s*([0-9]+)$/, m)) {
+        data["cut"] = m[1]
+    }
+    if (match($0, /^balance\\s*([0-9\.]+)$/, m)) {
+        data["balance"] = m[1]
+    }
+}
+END {
+    if (length(data) > 0) {
+        print_and_clear(data)
+    }
+}
+
+function print_and_clear(data) {
+    failed = length(data) != 8
+    printf "%s,", data["graph"]
+    printf "%d,", data["n"]
+    printf "%d,", data["m"]
+    printf "%d,", data["k"]
+    printf "%d,", data["seed"]
+    printf "%d,", data["cut"]
+    printf "%f,", data["balance"]
+    printf "%f,", data["time"]
+    printf "%d", failed
+    printf "\\n"
+
+    for (e in data) {
+        delete data[e]
+    }
+}
+EOF
+
+gawk "$parser" <(for FILE in "$DIR"/*; do echo "FILE=$(basename "$FILE")"; cat "$FILE"; done)
+

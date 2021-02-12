@@ -1,0 +1,50 @@
+#!/bin/bash
+DIR=${1:-"."}
+read -rd '' parser << 'EOF'
+BEGIN {
+    print "Graph,N,M,K,Epsilon,Seed,Cut,Balance,Time,idx_t_width,real_t_width,idx_t_ptr_width,Failed"
+    split("", data)
+}
+match($0, /METIS 5\.0/) {
+    if (length(data) > 0) { yield(data) }
+}
+match($0, /size of idx_t: ([0-9]+)bits, real_t: ([0-9]+)bits, idx_t \*: ([0-9]+)bits/, m) {
+    data["idx_t_width"] = m[1]
+    data["real_t_width"] = m[2]
+    data["idx_t_ptr_width"] = m[3]
+}
+match($0, /Name: .*\/(.*\.graph), #Vertices: ([0-9]+), #Edges: ([0-9]+), #Parts: ([0-9]+)/, m) {
+    data["graph"] = m[1]
+    data["n"] = m[2]
+    data["m"] = m[3]
+    data["k"] = m[4]
+}
+match($0, /ufactor=([0-9\.]+)/, m) { data["eps"] = m[1] - 1.0 }
+match($0, /seed=(\-?[0-9]+)/, m) { data["seed"] = m[1] }
+match($0, /Edgecut: ([0-9]+)/, m) { data["cut"] = m[1] }
+match($0, /constraint #0:\s+([0-9\.]+)/, m) { data["balance"] = m[1] }
+match($0, /Partitioning:\s+([0-9\.]+)/, m) { data["time"] = m[1] }
+END {
+    if (length(data) > 0) { yield(data) }
+}
+
+function yield(data) {
+    failed = length(data) != 12
+    printf "%s,", data["graph"]
+    printf "%d,", data["n"]
+    printf "%d,", data["m"]
+    printf "%d,", data["k"]
+    printf "%f,", data["eps"]
+    printf "%d,", data["seed"]
+    printf "%d,", data["cut"]
+    printf "%f,", data["balance"]
+    printf "%f,", data["time"]
+    printf "%d,", data["idx_t_width"]
+    printf "%d,", data["real_t_width"]
+    printf "%d,", data["idx_t_ptr_width"]
+    printf "%d\n", failed
+
+    for (e in data) { delete data[e] }
+}
+EOF
+gawk "$parser" <(for FILE in "$DIR"/*; do cat "$FILE"; done)
