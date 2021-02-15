@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # mtmetis must be run with --times
-# log filename should contain __seed[0-9]+, otherwise the Seed column is set to -1
+# log filename should contain (graph), __t(threads), __k(blocks), __seed(seed) and __eps(epsilon), otherwise the Seed column is set to -1
+# and other columns might be unavailable if the log file is empty
 
 read -rd '' SCRIPT <<'EOF' 
 BEGIN {
@@ -9,8 +10,12 @@ BEGIN {
       reset()
 }    
 /NEXT_FILE/ { yield() }
-match($0, /FILE=.*__seed([0-9]+)/, m) {
-      data["Seed"] = m[1]
+match($0, /FILE=([^_]+).*__t([0-9]+).*__k([0-9]+).*__seed([0-9]+)__eps([0-9\.]+)/, m) { 
+      data["Graph"] = m[1] ".graph"
+      data["Threads"] = m[2]
+      data["K"] = m[3]	  
+      data["Seed"] = m[4]
+      data["Epsilon"] = m[5]
 }
 match($0, /Read '(.*\/)*(.+)' with ([0-9]+) vertices and ([0-9]+) edges/, m) {
       data["Graph"] = m[2]
@@ -43,6 +48,9 @@ function yield() {
       if (length(data) == 0) { return }
       if (!("Seed" in data)) { data["Seed"] = -1 }
       failed = length(data) < 10
+
+      if (!("N" in data)) { data["N"] = -1 }
+      if (!("M" in data)) { data["M"] = -1 }
       
       printf "%s,", data["Graph"]
       printf "%d,", data["N"]
