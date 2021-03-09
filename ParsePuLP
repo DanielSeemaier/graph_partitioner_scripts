@@ -18,6 +18,9 @@ match($0, /FILE=.*__eps([0-9\.]+).*\.log/, m) {
 match($0, /FILE=.*__t([0-9]+)/, m) {
       data["Threads"] = m[1]
 }
+match($0, /FILE=.*__k([0-9]+)/, m) {
+      data["K"] = m[1]
+}
 match($0, /Reading in (.*\/)*(.+) \.\.\.\s* ([0-9]+)\s* ([0-9]+)/, m) {
       data["Graph"] = m[2]
       data["N"] = m[3]
